@@ -1,27 +1,14 @@
-print("ttniscript baslatiliyor...") -- F9 konsolunda bunu görmen lazım
+-- [[ ttniscript | ttni131 ]] --
+-- [[ File: sniper_arn.lua ]] --
 
-local success, err = pcall(function()
-    local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-    local Window = Library.Colors:CreateWindow("ttniscript | ttni131", "RightShift")
-    
-    -- ... (Geri kalan kodlar buraya) ...
-    
-    print("ttniscript basariyla yuklendi!")
-end)
-
-if not success then
-    warn("Script yuklenirken hata olustu: " .. err)
-end-- [[ ttniscript | ttni131 ]] --
--- [[ File: sniper arn.lua ]] --
-
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.Colors:CreateWindow("ttniscript | ttni131", "RightShift")
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({Name = "ttniscript | ttni131", HidePremium = false, SaveConfig = true, ConfigFolder = "ttniConfig"})
 
 local Settings = {
     Aimbot = false,
     WallCheck = true,
-    Smoothness = 1, -- Full Lock (1 Smoot)
-    AimbotKey = Enum.UserInputType.MouseButton2 -- Sağ Tık
+    Smoothness = 1, -- Full Lock
+    AimbotKey = Enum.UserInputType.MouseButton2
 }
 
 local Players = game:GetService("Players")
@@ -30,19 +17,21 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Duvar Kontrolü
+-- Duvar Kontrolü (Raycast)
 local function IsVisible(TargetPart)
     if not Settings.WallCheck then return true end
     local Character = LocalPlayer.Character
     if not Character then return false end
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {Character, TargetPart.Parent}
-    local result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position).Unit * 1000, params)
-    return result == nil
+    
+    local RaycastParams = RaycastParams.new()
+    RaycastParams.FilterType = Enum.RaycastFilterType.Exclude
+    RaycastParams.FilterDescendantsInstances = {Character, TargetPart.Parent}
+    
+    local Result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position).Unit * 1000, RaycastParams)
+    return Result == nil
 end
 
--- Hedef Seçici
+-- Hedef Bulucu
 local function GetTarget()
     local Closest = nil
     local ShortestDistance = math.huge
@@ -61,25 +50,57 @@ local function GetTarget()
     return Closest
 end
 
--- Menü Tasarımı
-local Main = Window:NewTab("ttniscript")
-local Section = Main:NewSection("Sniper Arena - ttni131")
+-- Menü Sekmeleri
+local MainTab = Window:MakeTab({
+	Name = "Aimbot & Visuals",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
 
-Section:NewToggle("Aimbot (Hard Lock)", "Sağ tıkla hedefe anında yapışır.", function(state) Settings.Aimbot = state end)
-Section:NewToggle("Wall Check", "Duvar arkası kitlemeyi engeller.", function(state) Settings.WallCheck = state end)
-Section:NewSlider("Smoothness", "1 = Full Lock", 100, 10, function(s) Settings.Smoothness = s / 100 end)
-Section:NewButton("ESP (Neon Green)", "Rakipleri gösterir.", function()
-    for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and not v.Character:FindFirstChild("ttni_ESP") then
-            local h = Instance.new("Highlight", v.Character)
-            h.Name = "ttni_ESP"
-            h.FillColor = Color3.fromRGB(0, 255, 127)
-            h.FillTransparency = 0.5
+MainTab:AddToggle({
+	Name = "Hard Aimbot (Sağ Tık)",
+	Default = false,
+	Callback = function(Value)
+		Settings.Aimbot = Value
+	end    
+})
+
+MainTab:AddToggle({
+	Name = "Wall Check (Görüş Kontrolü)",
+	Default = true,
+	Callback = function(Value)
+		Settings.WallCheck = Value
+	end    
+})
+
+MainTab:AddSlider({
+	Name = "Smoothness (Hız)",
+	Min = 1,
+	Max = 100,
+	Default = 100,
+	Color = Color3.fromRGB(0,255,127),
+	Increment = 1,
+	ValueName = "%",
+	Callback = function(Value)
+		Settings.Smoothness = Value / 100
+	end    
+})
+
+MainTab:AddButton({
+	Name = "Neon ESP",
+	Callback = function()
+        for _, v in pairs(Players:GetPlayers()) do
+            if v ~= LocalPlayer and v.Character and not v.Character:FindFirstChild("ttni_ESP") then
+                local h = Instance.new("Highlight", v.Character)
+                h.Name = "ttni_ESP"
+                h.FillColor = Color3.fromRGB(0, 255, 127)
+                h.FillTransparency = 0.5
+            end
         end
-    end
-end)
+	end    
+})
 
--- Döngü
+-- Çalışma Döngüsü
 RunService.RenderStepped:Connect(function()
     if Settings.Aimbot and UserInputService:IsMouseButtonPressed(Settings.AimbotKey) then
         local target = GetTarget()
@@ -89,4 +110,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("ttniscript Loaded! Creator: ttni131")
+OrionLib:Init() -- Menüyü Başlat
