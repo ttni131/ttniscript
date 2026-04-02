@@ -7,8 +7,8 @@ local Window = Library.Colors:CreateWindow("ttniscript | ttni131", "RightShift")
 local Settings = {
     Aimbot = false,
     WallCheck = true,
-    Smoothness = 1, -- Full Lock
-    AimbotKey = Enum.UserInputType.MouseButton2
+    Smoothness = 1, -- Full Lock (1 Smoot)
+    AimbotKey = Enum.UserInputType.MouseButton2 -- Sağ Tık
 }
 
 local Players = game:GetService("Players")
@@ -17,6 +17,7 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
+-- Duvar Kontrolü
 local function IsVisible(TargetPart)
     if not Settings.WallCheck then return true end
     local Character = LocalPlayer.Character
@@ -28,6 +29,7 @@ local function IsVisible(TargetPart)
     return result == nil
 end
 
+-- Hedef Seçici
 local function GetTarget()
     local Closest = nil
     local ShortestDistance = math.huge
@@ -46,6 +48,7 @@ local function GetTarget()
     return Closest
 end
 
+-- Menü Tasarımı
 local Main = Window:NewTab("ttniscript")
 local Section = Main:NewSection("Sniper Arena - ttni131")
 
@@ -63,6 +66,7 @@ Section:NewButton("ESP (Neon Green)", "Rakipleri gösterir.", function()
     end
 end)
 
+-- Döngü
 RunService.RenderStepped:Connect(function()
     if Settings.Aimbot and UserInputService:IsMouseButtonPressed(Settings.AimbotKey) then
         local target = GetTarget()
