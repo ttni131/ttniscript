@@ -1,4 +1,17 @@
--- [[ ttniscript | ttni131 ]] --
+print("ttniscript baslatiliyor...") -- F9 konsolunda bunu görmen lazım
+
+local success, err = pcall(function()
+    local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+    local Window = Library.Colors:CreateWindow("ttniscript | ttni131", "RightShift")
+    
+    -- ... (Geri kalan kodlar buraya) ...
+    
+    print("ttniscript basariyla yuklendi!")
+end)
+
+if not success then
+    warn("Script yuklenirken hata olustu: " .. err)
+end-- [[ ttniscript | ttni131 ]] --
 -- [[ File: sniper arn.lua ]] --
 
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
