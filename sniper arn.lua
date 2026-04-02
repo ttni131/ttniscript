@@ -1,13 +1,10 @@
 -- [[ ttniscript | ttni131 ]] --
--- [[ File: sniper_arn.lua ]] --
-
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Window = OrionLib:MakeWindow({Name = "ttniscript | ttni131", HidePremium = false, SaveConfig = true, ConfigFolder = "ttniConfig"})
+-- [[ No-Library Edition (Fix for Nil Error) ]] --
 
 local Settings = {
     Aimbot = false,
     WallCheck = true,
-    Smoothness = 1, -- Full Lock
+    Smoothness = 1, -- 1 = Full Lock
     AimbotKey = Enum.UserInputType.MouseButton2
 }
 
@@ -17,90 +14,82 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- Duvar Kontrolü (Raycast)
+-- BASIT MENU OLUSTURMA (Kütüphane Gerektirmez)
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 200, 0, 150)
+Frame.Position = UDim2.new(0, 50, 0, 50)
+Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Frame.BorderSizePixel = 2
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Text = "ttniscript | ttni131"
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.TextColor3 = Color3.fromRGB(0, 255, 127)
+Title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+
+-- Aimbot Button
+local AimBtn = Instance.new("TextButton", Frame)
+AimBtn.Text = "Aimbot: OFF"
+AimBtn.Size = UDim2.new(0, 180, 0, 35)
+AimBtn.Position = UDim2.new(0, 10, 0, 40)
+AimBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+AimBtn.TextColor3 = Color3.new(1, 1, 1)
+
+AimBtn.MouseButton1Click:Connect(function()
+    Settings.Aimbot = not Settings.Aimbot
+    AimBtn.Text = Settings.Aimbot and "Aimbot: ON" or "Aimbot: OFF"
+    AimBtn.BackgroundColor3 = Settings.Aimbot and Color3.fromRGB(0, 100, 0) or Color3.fromRGB(40, 40, 40)
+end)
+
+-- ESP Button
+local ESPBtn = Instance.new("TextButton", Frame)
+ESPBtn.Text = "Neon ESP"
+ESPBtn.Size = UDim2.new(0, 180, 0, 35)
+ESPBtn.Position = UDim2.new(0, 10, 0, 85)
+ESPBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+ESPBtn.TextColor3 = Color3.new(1, 1, 1)
+
+ESPBtn.MouseButton1Click:Connect(function()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character then
+            if not v.Character:FindFirstChild("ttni_ESP") then
+                local h = Instance.new("Highlight", v.Character)
+                h.Name = "ttni_ESP"
+                h.FillColor = Color3.fromRGB(0, 255, 127)
+            end
+        end
+    end
+end)
+
+-- AIMBOT MANTIGI
 local function IsVisible(TargetPart)
     if not Settings.WallCheck then return true end
-    local Character = LocalPlayer.Character
-    if not Character then return false end
-    
-    local RaycastParams = RaycastParams.new()
-    RaycastParams.FilterType = Enum.RaycastFilterType.Exclude
-    RaycastParams.FilterDescendantsInstances = {Character, TargetPart.Parent}
-    
-    local Result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position).Unit * 1000, RaycastParams)
-    return Result == nil
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = {LocalPlayer.Character, TargetPart.Parent}
+    local result = workspace:Raycast(Camera.CFrame.Position, (TargetPart.Position - Camera.CFrame.Position).Unit * 1000, params)
+    return result == nil
 end
 
--- Hedef Bulucu
 local function GetTarget()
-    local Closest = nil
-    local ShortestDistance = math.huge
+    local closest = nil
+    local dist = math.huge
     for _, v in pairs(Players:GetPlayers()) do
-        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") and v.Character:FindFirstChild("Humanoid").Health > 0 then
-            local ScreenPos, OnScreen = Camera:WorldToViewportPoint(v.Character.Head.Position)
-            if OnScreen and IsVisible(v.Character.Head) then
-                local dist = (Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2.new(ScreenPos.X, ScreenPos.Y)).Magnitude
-                if dist < ShortestDistance then
-                    Closest = v.Character.Head
-                    ShortestDistance = dist
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
+            local pos, onScreen = Camera:WorldToViewportPoint(v.Character.Head.Position)
+            if onScreen and IsVisible(v.Character.Head) then
+                local magnitude = (Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y) - Vector2.new(pos.X, pos.Y)).Magnitude
+                if magnitude < dist then
+                    closest = v.Character.Head
+                    dist = magnitude
                 end
             end
         end
     end
-    return Closest
+    return closest
 end
 
--- Menü Sekmeleri
-local MainTab = Window:MakeTab({
-	Name = "Aimbot & Visuals",
-	Icon = "rbxassetid://4483345998",
-	PremiumOnly = false
-})
-
-MainTab:AddToggle({
-	Name = "Hard Aimbot (Sağ Tık)",
-	Default = false,
-	Callback = function(Value)
-		Settings.Aimbot = Value
-	end    
-})
-
-MainTab:AddToggle({
-	Name = "Wall Check (Görüş Kontrolü)",
-	Default = true,
-	Callback = function(Value)
-		Settings.WallCheck = Value
-	end    
-})
-
-MainTab:AddSlider({
-	Name = "Smoothness (Hız)",
-	Min = 1,
-	Max = 100,
-	Default = 100,
-	Color = Color3.fromRGB(0,255,127),
-	Increment = 1,
-	ValueName = "%",
-	Callback = function(Value)
-		Settings.Smoothness = Value / 100
-	end    
-})
-
-MainTab:AddButton({
-	Name = "Neon ESP",
-	Callback = function()
-        for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character and not v.Character:FindFirstChild("ttni_ESP") then
-                local h = Instance.new("Highlight", v.Character)
-                h.Name = "ttni_ESP"
-                h.FillColor = Color3.fromRGB(0, 255, 127)
-                h.FillTransparency = 0.5
-            end
-        end
-	end    
-})
-
--- Çalışma Döngüsü
 RunService.RenderStepped:Connect(function()
     if Settings.Aimbot and UserInputService:IsMouseButtonPressed(Settings.AimbotKey) then
         local target = GetTarget()
@@ -110,4 +99,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-OrionLib:Init() -- Menüyü Başlat
+print("ttniscript FIXED Edition Loaded!")
